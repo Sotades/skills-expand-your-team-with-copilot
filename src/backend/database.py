@@ -18,12 +18,15 @@ def hash_password(password):
     return ph.hash(password)
 
 def init_database():
-    """Initialize database if empty"""
+    """Initialize the database with seed data where needed."""
 
-    # Initialize activities if empty
-    if activities_collection.count_documents({}) == 0:
-        for name, details in initial_activities.items():
-            activities_collection.insert_one({"_id": name, **details})
+    # Add any missing activities without overwriting existing activity data
+    for name, details in initial_activities.items():
+        activities_collection.update_one(
+            {"_id": name},
+            {"$setOnInsert": {"_id": name, **details}},
+            upsert=True
+        )
             
     # Initialize teacher accounts if empty
     if teachers_collection.count_documents({}) == 0:
