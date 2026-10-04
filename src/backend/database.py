@@ -18,12 +18,20 @@ def hash_password(password):
     return ph.hash(password)
 
 def init_database():
-    """Initialize database if empty"""
+    """Initialize the database with seed data where needed."""
 
-    # Initialize activities if empty
-    if activities_collection.count_documents({}) == 0:
-        for name, details in initial_activities.items():
-            activities_collection.insert_one({"_id": name, **details})
+    # Add any missing activities without overwriting existing activity data
+    for name, details in initial_activities.items():
+        activities_collection.update_one(
+            {"_id": name},
+            {"$setOnInsert": {"_id": name, **details}},
+            upsert=True
+        )
+
+    activities_collection.update_one(
+        {"_id": "Manga Maniacs"},
+        {"$set": {"description": initial_activities["Manga Maniacs"]["description"]}}
+    )
             
     # Initialize teacher accounts if empty
     if teachers_collection.count_documents({}) == 0:
@@ -97,6 +105,16 @@ initial_activities = {
         },
         "max_participants": 15,
         "participants": ["amelia@mergington.edu", "harper@mergington.edu"]
+    },
+    "Manga Maniacs": {
+        "description": "Step into bold worlds, follow unforgettable heroes, and debate the twists and turns of Japanese manga with fellow fans.",
+        "schedule": "Tuesdays, 7:00 PM",
+        "schedule_details": {
+            "days": ["Tuesday"],
+            "start_time": "19:00"
+        },
+        "max_participants": 15,
+        "participants": []
     },
     "Drama Club": {
         "description": "Act, direct, and produce plays and performances",
@@ -186,4 +204,3 @@ initial_teachers = [
         "role": "admin"
     }
 ]
-
